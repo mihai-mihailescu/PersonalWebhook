@@ -1,0 +1,6 @@
+@PersonalWebhook.Server_HostAddress = http://localhost:5229
+
+GET {{PersonalWebhook.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
