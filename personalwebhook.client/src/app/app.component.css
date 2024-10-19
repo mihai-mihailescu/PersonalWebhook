@@ -1,14 +1,64 @@
-﻿:host {
-    max-width: 1280px;
-    padding: 2rem;
+﻿html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+}
+
+#full-size {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    /* or overflow:auto; if you want scrollbars */
+}
+
+
+.page {
+    display: grid;
+    grid-template-rows: 55px calc(100vh - 55px);
+    /* height limitation on second row */
+    grid-template-columns: 300px auto;
+    grid-template-areas:
+        "header header"
+        "nav content";
+}
+
+.nav {
+    grid-area: nav;
+    /* background-color: aqua; */
+    overflow: auto;
+}
+
+.header {
+    grid-area: header;
+    background-color: rgb(255, 255, 255);
+    border: 2px;
     text-align: center;
+    align-content: center;
+    font-size: xx-large;
 }
 
-th, td {
-    padding-left: 1rem;
-    padding-right: 1rem;
+.content {
+    grid-area: content;
+    /* background-color: red; */
+    overflow: auto;
+    /* overflow condition on parent */
 }
 
-table {
-    margin: 0 auto;
+article {
+    height: 1000px;
+    /* height set on child; triggers scroll */
+}
+
+.mat-mdc-row:hover {
+    background-color: rgb(191, 191, 191);
+}
+
+.mat-mdc-row:click {
+    background-color: rgb(191, 191, 191);
+}
+
+.selected-row{
+    background-color: rgb(184, 184, 184);
 }

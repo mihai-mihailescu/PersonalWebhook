@@ -10,19 +10,19 @@ namespace PersonalWebhook.Server
     {
         Task<object> ProcessPostRequest(HttpRequest request);
         Task<object> ProcessGetRequest(HttpRequest request);
-        //IncomingRequestBase GetIncomingRequestBase();
+        string GetSessionId();
+        string GetBaseUrl();
     }
     public class WebhookReceiver(
         IHttpContextAccessor httpContextAccessor,
         ILogger<WebhookReceiver> logger,
-        IHubContext<SignalRHub> signalRHub
+        IHubContext<SignalRHub> signalRHub,
+        IConfiguration configuration
     ) : IWebhookReceiver
     {
         private string SessionId = Guid.NewGuid().ToString();
-        private static int RequestNumber = 0;
-        //private IncomingRequestBase IncomingRequest { get; set; } = new();
-
-        //public IncomingRequestBase GetIncomingRequestBase() => IncomingRequest;
+        public string GetBaseUrl() => configuration["BaseUrl"] ?? string.Empty;
+        public string GetSessionId() => SessionId;
         /// <summary>
         /// Writes the POST request body to the console and returns JSON
         /// </summary>
@@ -46,7 +46,6 @@ namespace PersonalWebhook.Server
         /// <returns></returns>
         private async Task ProcessRequestDetails(HttpRequest request)
         {
-            RequestNumber++;
             Dictionary<string, object?> requestDetails = GetRequestDetails(request);
             string requestDetailsJson = JsonConvert.SerializeObject(requestDetails, Formatting.Indented, new JsonSerializerSettings
             {
@@ -64,17 +63,27 @@ namespace PersonalWebhook.Server
             {
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
             }); 
-            logger.LogInformation("===REQUEST DETAILS==={NewLine}{requestDetailsJson}",Environment.NewLine, requestDetailsJson);
-            logger.LogInformation("===REQUEST HEADERS==={NewLine}{requestHeaders}", Environment.NewLine, GetRequestHeadersJson(request));
-            logger.LogInformation("===REQUEST JSON==={NewLine}{requestJsonString}", Environment.NewLine, requestJsonString);
 
-            IncomingRequestBase incomingRequest = new()
+            logger.LogDebug("===REQUEST DETAILS==={NewLine}{requestDetailsJson}",Environment.NewLine, requestDetailsJson);
+            logger.LogDebug("===REQUEST HEADERS==={NewLine}{requestHeaders}", Environment.NewLine, GetRequestHeadersJson(request));
+            logger.LogDebug("===REQUEST JSON==={NewLine}{requestJsonString}", Environment.NewLine, requestJsonString);
+
+            IncomingRequestBase incomingRequest = new(SessionId)
             {
                 Method = request.Method,
                 RequestBody = requestBody,
-                SessionId = SessionId,
-                RequestId = RequestNumber.ToString(),
+                AbsoluteUri = request.GetDisplayUrl(),
+                QueryString = request.QueryString.ToString(),
+                RemoteIpAddress = httpContextAccessor.HttpContext.Connection.RemoteIpAddress.ToString(),
+                RemotePort = httpContextAccessor.HttpContext.Connection.RemotePort
             };
+            foreach(var header in request.Headers)
+            {
+                incomingRequest.Headers.Add(new {
+                    header.Key,
+                    Value = header.Value.ToString()
+                });
+            }
             await signalRHub.Clients.All.SendAsync("ReceivedRequest",incomingRequest);
         }
 

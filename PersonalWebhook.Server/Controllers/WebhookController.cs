@@ -1,19 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
 namespace PersonalWebhook.Server
 {
     [ApiController]
-    [Route("")]
+    [Route("[controller]")]
+    [AllowAnonymous]
     public class WebhookController(
         IWebhookReceiver webhookService
         ) : Controller
     {
-        [Route("~/")]
-        public IActionResult Index()
-        {
-            return Ok();
-        }
         [HttpPost("{sessionUUID}")]
         public async Task<IActionResult> ProcessPostRequest(string sessionUUID) {
             object response = await webhookService.ProcessPostRequest(HttpContext.Request);
@@ -26,5 +23,13 @@ namespace PersonalWebhook.Server
             object response = await webhookService.ProcessGetRequest(HttpContext.Request);
             return Ok(response);
         }
+
+        [HttpGet]
+        [Route("[action]")]
+        public string GetWebhookDetails() => webhookService.GetSessionId();
+
+        [HttpGet]
+        [Route("[action]")]
+        public string GetBaseUrl() => webhookService.GetBaseUrl();
     }
 }

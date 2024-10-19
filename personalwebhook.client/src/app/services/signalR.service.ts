@@ -6,11 +6,11 @@ import { IncomingRequestBase } from '../models/IncomingRequestBase';
   providedIn: 'root'
 })
 export class SignalRService {
-  private hubConnection: signalR.HubConnection;
+  private readonly hubConnection: signalR.HubConnection;
 
   constructor() {
     this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl('https://localhost:7019/webhookHub',
+      .withUrl('/webhookHub',
         {
           skipNegotiation: false,
           transport: signalR.HttpTransportType.WebSockets
@@ -38,6 +38,7 @@ export class SignalRService {
   receiveMessage(): Observable<IncomingRequestBase> {
     return new Observable<IncomingRequestBase>((observer) => {
       this.hubConnection.on('ReceivedRequest', (message: IncomingRequestBase) => {
+        console.log(message);
         observer.next(message);
       });
     });
